@@ -1,28 +1,26 @@
 package se.atg.service.harrykart.java;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import se.atg.service.harrykart.java.service.HarryKartService;
+import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import com.sun.xml.xsom.impl.scd.Iterators.Map;
-
-import java.net.URI;
-
-import static io.restassured.RestAssured.given;
-
-import static io.restassured.RestAssured.with;
-import static io.restassured.RestAssured.when;
-import static org.hamcrest.Matchers.equalTo;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
@@ -48,15 +46,25 @@ public class HarryKartAppTest {
     }
     
     @Test
-    @DisplayName("The application doesn't know how to play yet")
+    @DisplayName("Calculate rankings of horse race")
     void cantPlayYet() {
-        given().//param(null, null)
-                header("Content-Type", ContentType.XML)
+    	
+    	 String FilePath = "src/main/resources/input_0.xml";
+    	         String XMLBodyToPost = null;
+				try {
+					XMLBodyToPost = new String(Files.readAllBytes(Paths.get(FilePath)));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+    	
+        Response response=given().
+                header("Content-Type", ContentType.XML).body(XMLBodyToPost)
         .when()
                 .post(harryKartApp)
         .then()
                 .assertThat()
-                
-                .header("Content-Type", ContentType.JSON.toString()).and().extract().response().body().as(Map.class);
+                .statusCode(200)
+                .header("Content-Type", ContentType.JSON.toString()).extract().response();
+        assertEquals(response.jsonPath().getList("ranking").size(), 3);
     }
 }
